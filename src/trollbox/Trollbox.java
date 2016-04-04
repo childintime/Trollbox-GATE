@@ -11,10 +11,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  *
- * @author jakub
+ * @author me@jakubsamek.cz
  */
 public class Trollbox {
 
@@ -24,6 +26,8 @@ public class Trollbox {
     public static void main(String[] args) throws IOException, InterruptedException {
         // log4j init
         org.apache.log4j.BasicConfigurator.configure();
+        
+        
         
         // gate embedded client
         GateClient client = new GateClient();
@@ -38,9 +42,14 @@ public class Trollbox {
         int read;
         while ((read = is.read(buffer)) != -1) {
             String output = new String(buffer, 0, read);
-            client.run(output);
             
-            System.out.println(output);
+            JSONObject jsonObject = new JSONObject(output);
+            //jsonObjet.getString(1);
+
+            
+            client.run(jsonObject.getString("message"));
+            
+            System.out.println(jsonObject.getString("message"));
             System.out.flush();
         };
         clientSocket.close();

@@ -23,6 +23,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.json.JSONArray;
 
 
 
@@ -39,6 +40,9 @@ public class GateClient {
     private static boolean isGateInitilised = false;
     
     public void run(String chatString) throws InterruptedException {
+        
+        
+        
         //Thread.sleep(5000);
         //annotationPipeline.
         try {
@@ -104,6 +108,10 @@ public class GateClient {
             // create an instance of a Sentence Splitter processing resource
             ProcessingResource sentenceSplitterPR = (ProcessingResource) Factory.createResource("gate.creole.splitter.SentenceSplitter");
 
+            //File htmlannotations = new File("/Users/jakub/Documents/skola/ddw/jape/trollbox.jape");
+            //ProcessingResource htmlexporter = (ProcessingResource) Factory.createResource("gate.creole.microdata.MicrodataExporter");
+            
+            
             
             System.out.println("Working Directory = " +
               System.getProperty("user.dir"));
@@ -152,6 +160,7 @@ public class GateClient {
             annotationPipeline.add(gazetteer);
             //annotationPipeline.add(sentenceSplitterPR);
             annotationPipeline.add(japeTransducerPR);
+            //annotationPipeline.add(htmlexporter);
             
             // create a document
            // Document document = Factory.newDocument("This is some text person James Newman");
