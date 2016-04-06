@@ -10,14 +10,18 @@ import gate.AnnotationSet;
 import gate.Corpus;
 import gate.CreoleRegister;
 import gate.Document;
+import gate.DocumentExporter;
 import gate.Factory;
 import gate.FeatureMap;
 import gate.Gate;
 import gate.Node;
 import gate.ProcessingResource;
+import gate.Resource;
 import gate.creole.SerialAnalyserController;
 import gate.util.GateException;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -36,10 +40,12 @@ public class GateClient {
     // corpus pipeline
     private static SerialAnalyserController annotationPipeline = null;
     
+    private static DocumentExporter htmlExporter = null;
+    
     // whether the GATE is initialised
     private static boolean isGateInitilised = false;
     
-    public void run(String chatString) throws InterruptedException {
+    public void run(String chatString) throws InterruptedException, IOException {
         
         
         
@@ -63,10 +69,9 @@ public class GateClient {
                 System.out.println("\n\nDocument cislo: " + (i+1));
                 Document doc = corpus.get(i);
 
+                
                 // get the default annotation set
                 AnnotationSet as_default = doc.getAnnotations();
-//as_default.ge
-
                 
                 FeatureMap futureMap = null;
                 // get all Token annotations
@@ -108,9 +113,8 @@ public class GateClient {
             // create an instance of a Sentence Splitter processing resource
             ProcessingResource sentenceSplitterPR = (ProcessingResource) Factory.createResource("gate.creole.splitter.SentenceSplitter");
 
-            //File htmlannotations = new File("/Users/jakub/Documents/skola/ddw/jape/trollbox.jape");
-            //ProcessingResource htmlexporter = (ProcessingResource) Factory.createResource("gate.creole.microdata.MicrodataExporter");
             
+File htmlconfig = new File("/Users/jakub/Documents/skola/ddw/html5/ANNIE.xml");
             
             
             System.out.println("Working Directory = " +
@@ -160,7 +164,7 @@ public class GateClient {
             annotationPipeline.add(gazetteer);
             //annotationPipeline.add(sentenceSplitterPR);
             annotationPipeline.add(japeTransducerPR);
-            //annotationPipeline.add(htmlexporter);
+            
             
             // create a document
            // Document document = Factory.newDocument("This is some text person James Newman");
@@ -271,7 +275,9 @@ public class GateClient {
             // load ANNIE plugin
             CreoleRegister register = Gate.getCreoleRegister();
             URL annieHome = new File(pluginsHome, "ANNIE").toURI().toURL();
+            URL htmlHome = new File(pluginsHome, "Format_HTML5Microdata").toURI().toURL();
             register.registerDirectories(annieHome);
+            register.registerDirectories(htmlHome);
             
             // flag that GATE was successfuly initialised
             isGateInitilised = true;
