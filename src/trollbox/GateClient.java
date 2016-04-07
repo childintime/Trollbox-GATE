@@ -25,9 +25,12 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.ivy.util.Message;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 
 
@@ -40,25 +43,27 @@ public class GateClient {
     // corpus pipeline
     private static SerialAnalyserController annotationPipeline = null;
     
-    private static DocumentExporter htmlExporter = null;
+    // seznam men, ktere nas zajimaji
+    private static List<Currency> currencyToWatch;
     
     // whether the GATE is initialised
     private static boolean isGateInitilised = false;
     
-    public void run(String chatString) throws InterruptedException, IOException {
+    public ChatMessage run(JSONObject chatJSON) throws InterruptedException, IOException {
+        // nova zprava
+        ChatMessage chatMessage = new ChatMessage();
         
+        chatMessage.setMessage(chatJSON.getString("message"));
+        chatMessage.setUsername(chatJSON.getString("username"));
+        chatMessage.setKarma(chatJSON.getInt("karma"));
+        chatMessage.setMessageid(chatJSON.getInt("message_id"));
+        chatMessage.setCurrencyList(new ArrayList<>());
         
-        
-        //Thread.sleep(5000);
-        //annotationPipeline.
         try {
-            Document test = Factory.newDocument(chatString);
+            Document test = Factory.newDocument(chatMessage.getMessage());
             Corpus corpus = Factory.newCorpus("");
             corpus.add(test);
-            //corpus.add(eu);
-            //corpus.add(brands);
-            //corpus.add(olympic);
-
+            
             // set the corpus to the pipeline
             annotationPipeline.setCorpus(corpus);
 
@@ -66,7 +71,7 @@ public class GateClient {
             annotationPipeline.execute();
             
             for(int i=0; i< corpus.size(); i++){
-                System.out.println("\n\nDocument cislo: " + (i+1));
+                //System.out.println("\n\nDocument cislo: " + (i+1));
                 Document doc = corpus.get(i);
 
                 
@@ -74,23 +79,24 @@ public class GateClient {
                 AnnotationSet as_default = doc.getAnnotations();
                 
                 FeatureMap futureMap = null;
-                // get all Token annotations
                 
-                if (as_default.get("Ethereum",futureMap).size() > 0) {
-                    
+                chatMessage.setCurrencywords(as_default.get("Currency",futureMap).size());
+                chatMessage.setUpwords(as_default.get("Up",futureMap).size());
+                chatMessage.setDownwords(as_default.get("Down",futureMap).size());
+                
+                // pokud je ve zprave zminka o nejake mene, ktere sledujeme, tak ji pridat do seznamu
+                for (Currency currency : currencyToWatch) {
+                    if (as_default.get(currency.getName(),futureMap).size() > 0 ) {
+                        chatMessage.getCurrencyList().add(new Currency(currency.getId(), as_default.get(currency.getName(),futureMap).size()));
+                    }
                 }
-                
-                
-                System.out.println("Currency words: " + as_default.get("Currency",futureMap).size());
-                System.out.println("Ethereum words: " + as_default.get("Ethereum",futureMap).size());
-                System.out.println("Bitcoin words: " + as_default.get("Bitcoin",futureMap).size());
-                System.out.println("Down words: " + as_default.get("Down",futureMap).size());
-                System.out.println("Up words: " + as_default.get("Up",futureMap).size());
             }
         
         } catch (GateException ex) {
             Logger.getLogger(GateClient.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        return chatMessage;
             
     
     }
@@ -111,14 +117,12 @@ public class GateClient {
             ProcessingResource tokenizerPR = (ProcessingResource) Factory.createResource("gate.creole.tokeniser.DefaultTokeniser");
 
             // create an instance of a Sentence Splitter processing resource
-            ProcessingResource sentenceSplitterPR = (ProcessingResource) Factory.createResource("gate.creole.splitter.SentenceSplitter");
+            //ProcessingResource sentenceSplitterPR = (ProcessingResource) Factory.createResource("gate.creole.splitter.SentenceSplitter");
 
             
-File htmlconfig = new File("/Users/jakub/Documents/skola/ddw/html5/ANNIE.xml");
-            
-            
-            System.out.println("Working Directory = " +
+            /*System.out.println("Working Directory = " +
               System.getProperty("user.dir"));
+            */
             // locate the JAPE grammar file
             File japeOrigFile = new File("/Users/jakub/Documents/skola/ddw/jape/trollbox.jape");
             java.net.URI japeURI = japeOrigFile.toURI();
@@ -165,97 +169,16 @@ File htmlconfig = new File("/Users/jakub/Documents/skola/ddw/html5/ANNIE.xml");
             //annotationPipeline.add(sentenceSplitterPR);
             annotationPipeline.add(japeTransducerPR);
             
-            
-            // create a document
-           // Document document = Factory.newDocument("This is some text person James Newman");
-            
-            //Document eu = Factory.newDocument(new File("/Users/jakub/Documents/skola/ddw/docs/eu").toURI().toURL());
-            //Document brands = Factory.newDocument(new File("/Users/jakub/Documents/skola/ddw/docs/brands").toURI().toURL());
-            //Document olympic = Factory.newDocument(new File("/Users/jakub/Documents/skola/ddw/docs/olympic").toURI().toURL());
-            
-        // create a corpus and add the document
          
-            //Document test = Factory.newDocument("dasfsdfds eth Dump ether btc crashing break pump");
-            //Corpus corpus = Factory.newCorpus("");
-            //corpus.add(test);
-            
-            // set the corpus to the pipeline
-            //annotationPipeline.setCorpus(corpus);
-
-            //run the pipeline
-            //annotationPipeline.execute();
-
-            
-            // loop through the documents in the corpus
-/*            
-            for(int i=0; i< corpus.size(); i++){
-                System.out.println("\n\nDocument cislo: " + (i+1));
-                Document doc = corpus.get(i);
-
-                // get the default annotation set
-                AnnotationSet as_default = doc.getAnnotations();
-
-                
-                FeatureMap futureMap = null;
-                // get all Token annotations
-                
-                if (as_default.get("Ethereum",futureMap).size() > 0) {
-                    
-                }
-                
-                
-                System.out.println("Currency words: " + as_default.get("Currency",futureMap).size());
-                System.out.println("Ethereum words: " + as_default.get("Ethereum",futureMap).size());
-                System.out.println("Bitcoin words: " + as_default.get("Bitcoin",futureMap).size());
-                System.out.println("Down words: " + as_default.get("Down",futureMap).size());
-                System.out.println("Up words: " + as_default.get("Up",futureMap).size());
-                //doc.ge
-                /*
-                AnnotationSet annSetTokens = as_default.get("Ethereum",futureMap);
-                System.out.println("Number of Country annotations: " + annSetTokens.size());
-                
-                ArrayList tokenAnnotations = new ArrayList(annSetTokens);
-
-                // looop through the Token annotations
-                for(int j = 0; j < tokenAnnotations.size(); ++j) {
-                    
-                    // get a token annotation
-                    Annotation token = (Annotation)tokenAnnotations.get(j);
-                    
-                    System.out.println(token.getFeatures().get("majorType"));
-                    // get the underlying string for the Token
-                    Node isaStart = token.getStartNode();
-                    Node isaEnd = token.getEndNode();
-                    String underlyingString = doc.getContent().getContent(isaStart.getOffset(), isaEnd.getOffset()).toString();
-                    System.out.println("Country token: " + underlyingString);
-                }
-                
-                annSetTokens = as_default.get("Company",futureMap);
-                System.out.println("Number of Company annotations: " + annSetTokens.size());
-
-                tokenAnnotations = new ArrayList(annSetTokens);
-
-                // looop through the Token annotations
-                for(int j = 0; j < tokenAnnotations.size(); ++j) {
-                    
-                    // get a token annotation
-                    Annotation token = (Annotation)tokenAnnotations.get(j);
-                    
-                    
-                    // get the underlying string for the Token
-                    Node isaStart = token.getStartNode();
-                    Node isaEnd = token.getEndNode();
-                    String underlyingString = doc.getContent().getContent(isaStart.getOffset(), isaEnd.getOffset()).toString();
-                    System.out.println("Company token: " + underlyingString);
-                }
-                
-            }
-        */
         } catch (GateException ex) {
             Logger.getLogger(GateClient.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     private void initialiseGate() {
+        // zatim takhle staticky pridane meny vcetne id
+        currencyToWatch = new ArrayList<Currency>();
+        currencyToWatch.add(new Currency("Ethereum", 1));
+        currencyToWatch.add(new Currency("Bitcoin", 2));
         
         try {
             // set GATE home folder
@@ -275,9 +198,8 @@ File htmlconfig = new File("/Users/jakub/Documents/skola/ddw/html5/ANNIE.xml");
             // load ANNIE plugin
             CreoleRegister register = Gate.getCreoleRegister();
             URL annieHome = new File(pluginsHome, "ANNIE").toURI().toURL();
-            URL htmlHome = new File(pluginsHome, "Format_HTML5Microdata").toURI().toURL();
             register.registerDirectories(annieHome);
-            register.registerDirectories(htmlHome);
+            
             
             // flag that GATE was successfuly initialised
             isGateInitilised = true;
